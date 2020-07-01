@@ -1,0 +1,20 @@
+Package: bayesrun
+Type: Package
+Title: Manage Azure Cloud for Running Bayesian Analyses 
+Version: 0.1.0
+Author: Parick Bills
+Maintainer: Patrick Bills <billspat@msu.edu>
+Description: Ths is a collectio of user-friendly functions for building storage, virtual machines and other resources on Azure for conveniently running Bayesian analyses in the cloud. 
+    Created by MSU ITServices for the MSU Zipkin Lab in the Integrative Biology Department
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Depends:
+    R (>= 3.5.0)
+Imports:
+    AzureRMR,
+    AzureStor,
+    AzureVM
+Suggests:
+    testthat
+RoxygenNote: 7.1.0
