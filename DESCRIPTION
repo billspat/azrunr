@@ -14,7 +14,8 @@ Depends:
 Imports:
     AzureRMR,
     AzureStor,
-    AzureVM
+    AzureVM,
+    stringr
 Suggests:
     testthat
 RoxygenNote: 7.1.0
