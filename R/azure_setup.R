@@ -7,7 +7,8 @@
 #' Tests that azure libraries are installed and working.
 #' @return T/F depending on if az is setup and works
 azure_check <- function() {
-  #TODO az login
+  #TODO write text to make sure that 1) azure libs are available and 2) user can log in
+  # equivalant in the CLI is az login
   print("not implemented")
   return(FALSE)
 }
