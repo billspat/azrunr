@@ -1,0 +1,7 @@
+# example Renviron file
+# copy this to a file named .Renviron
+# and enter in the details listed below.
+# Azure default cloud settings
+AZUREUSER=<yourazureusername>
+AZURESUB=<your azure subscription id>
+AZURERG=<your azure resource group name>
