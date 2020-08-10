@@ -87,7 +87,7 @@ get_rg <- function(rgname = getOption('azurerg'), subid=getOption('azuresub')) {
 
 #' set options for the azure storage account to use for this session
 #' @returns T/F if valid values were sent
-set_storage_account(){
+set_storage_account <- function(){
   print("not implemented")
   return(FALSE)
 
