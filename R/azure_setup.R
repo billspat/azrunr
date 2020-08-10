@@ -22,7 +22,7 @@ azure_check <- function() {
 #'  ... your code to work with azure
 #' @return T/F depending on if az is setup and works.
 #' If the values in Renviron, or sent as params are not valid, the options are not set
-set_azure_options(subid=NULL,azurerg=NULL){
+set_azure_options <- function(subid=NULL,azurerg=NULL){
   if(is.null(subid)){
     axuresub = Sys.getenv("AZURESUB")
   }
