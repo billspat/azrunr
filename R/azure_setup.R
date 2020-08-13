@@ -62,8 +62,10 @@ set_azure_options <- function(subid=NULL,azurerg=NULL){
 #' @return AzureRMR subscription object, or NULL if invalid sub id
 get_sub <- function(subid=getOption('azuresub')){
   azure_login<- AzureRMR::get_azure_login()
-  tryCatch(sub <- azure_login$get_subscription(subid),
-            finally=return(NULL))
+  sub <- tryCatch(test<-azure_login$get_subscription(subid),
+                  error=function(cond){
+                    print(cond)
+                    return(NULL)}, finally=function(cond){return(test)})
   return(sub)
 
 }
@@ -80,9 +82,14 @@ get_rg <- function(rgname = getOption('azurerg'), subid=getOption('azuresub')) {
     # one option for a cache is to compare the cached rg object's name with the string sent here
     # if they are different then load the new rg but otherwise return the cached rg
   if(! is.null(sub)){
-    trycatch(rg <- sub$get_resource_group(rgname), finally(return(NULL)))
-    return(rg)
+    rg <- tryCatch(test<-sub$get_resource_group(rgname),
+                   error=function(cond){
+                     print(cond)
+                     return(NULL)}, finally=function(cond){return(test)})
+  } else {
+    rg <- NULL
   }
+  return(rg)
 }
 
 #' set options for the azure storage account to use for this session
@@ -92,4 +99,3 @@ set_storage_account <- function(){
   return(FALSE)
 
 }
-
