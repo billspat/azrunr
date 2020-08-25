@@ -1,4 +1,4 @@
 library(testthat)
-library(bayesrun)
+library(azrunr)
 
-test_check("bayesrun")
+test_check("azrunr")

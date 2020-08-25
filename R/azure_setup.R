@@ -22,7 +22,7 @@ azure_check <- function() {
 #'  ... your code to work with azure
 #' @return T/F depending on if az is setup and works.
 #' If the values in Renviron, or sent as params are not valid, the options are not set
-set_azure_options(subid=NULL,azurerg=NULL){
+set_azure_options <- function(subid=NULL,azurerg=NULL){
   if(is.null(subid)){
     axuresub = Sys.getenv("AZURESUB")
   }
@@ -35,7 +35,7 @@ set_azure_options(subid=NULL,azurerg=NULL){
   if(is.null(sub)) {return(FALSE)}
   # if valid, set option
   else {
-    options('subid', subid)
+    options('subid' = subid)
   }
 
   if(is.null(azurerg)){
@@ -48,7 +48,7 @@ set_azure_options(subid=NULL,azurerg=NULL){
   if(is.null(rg)){ return(FALSE)}
   else {
   # if valid, set option
-  options('azurerg') = azurerg
+  options('azurerg' = azurerg)
 
   }
 
@@ -60,10 +60,12 @@ set_azure_options(subid=NULL,azurerg=NULL){
 #' requires Azure login and this function will initiate that
 #' @param subid optional string of subscriptoin id e.g xxxxxxxx-xxx-xxx-xxxx-xxxxxxxxxxxx
 #' @return AzureRMR subscription object, or NULL if invalid sub id
-get_sub <- function(subid=getOption('azuresub')){
+get_sub <- function(subid=getOption('subid')){
   azure_login<- AzureRMR::get_azure_login()
-  tryCatch(sub <- azure_login$get_subscription(subid),
-            finally=return(NULL))
+  sub <- tryCatch(test<-azure_login$get_subscription(subid),
+                  error=function(cond){
+                    print(cond)
+                    return(NULL)}, finally=function(cond){return(test)})
   return(sub)
 
 }
@@ -73,21 +75,26 @@ get_sub <- function(subid=getOption('azuresub')){
 #' the goal of this function is to allow the other functions to be flexible and make sending
 #' a resource group name optional by looking for global options
 #' @return AzureRMR ResourceGroup object
-get_rg <- function(rgname = getOption('azurerg'), subid=getOption('azuresub')) {
+get_rg <- function(rgname = getOption('azurerg'), subid=getOption('subid')) {
     # this will only ask for login if necessary
     # but it does recreate the object every time... perhaps cache these objects
   sub<- get_sub(subid)
     # one option for a cache is to compare the cached rg object's name with the string sent here
     # if they are different then load the new rg but otherwise return the cached rg
   if(! is.null(sub)){
-    trycatch(rg <- sub$get_resource_group(rgname), finally(return(NULL)))
-    return(rg)
+    rg <- tryCatch(test<-sub$get_resource_group(rgname),
+                   error=function(cond){
+                     print(cond)
+                     return(NULL)}, finally=function(cond){return(test)})
+  } else {
+    rg <- NULL
   }
+  return(rg)
 }
 
 #' set options for the azure storage account to use for this session
 #' @returns T/F if valid values were sent
-set_storage_account(){
+set_storage_account <- function(){
   print("not implemented")
   return(FALSE)
 

@@ -3,4 +3,5 @@
 .RData
 .Ruserdata
 .Renviron
-
+renv
+.Rprofile

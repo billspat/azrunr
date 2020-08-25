@@ -158,11 +158,8 @@ If we don't use Azure "File Storage" and and mounting the container, then files 
 Since files must be downloaded from a blob container to the local VM disk, that means that ANY disk system available from the internet would be a viable solution.  Given the MSU HPCC offers large storage capacity that can be downloaded using 'scp', if a user can work with ssh keys, then one could download from the HPC and not incur cloud storage costs.  The downside is that a public key and user id must be stored on the VM, whereas for Azure storage, one could create an "SAS" token ahead of time, and also limit permissions that this SAS has available.  
 
 
-Finally the last is to use R notebooks in DataBricks and read from Spark.   
- 
 
-
-Running R code on VM (no storage)
+Running R code on VM
 ---
 user logs in or runs azsetup() 
 user sets options for VM:
