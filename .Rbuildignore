@@ -1,3 +1,9 @@
+^README\.Rmd$
+^README\.md$
+^README-.*\.png$
+^README-.*\.png$
+^docs$
+^LICENSE\.md$
 ^renv$
 ^renv\.lock$
 ^.*\.Rproj$

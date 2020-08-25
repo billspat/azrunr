@@ -19,17 +19,17 @@ vmFromImage <- function(newVMName, resourceGroup, imageID, vmUsername, vmPasswor
 {
     #TODO test that resource group is valid
     #TODO test that the newVMName param is valid and matches re ^[a-z][a-z0-9-]{1,61}[a-z0-9]$.
-    userConfig <- user_config(vmUsername, password=vmPassword) #User
-    ipConfig <- ip_config(dynamic=TRUE)
-    imageConfig <- image_config(id = imageID)
+    userConfig <- AzureVM::user_config(vmUsername, password=vmPassword) #User
+    ipConfig <- AzureVM::ip_config(dynamic=TRUE)
+    imageConfig <- AzureVM::image_config(id = imageID)
 
     #TODO  vnet_config to use network security group
-    nsg = nsg_config()
+    nsg = AzureVM::nsg_config()
 
     #TODO use vnet config to connect to network security group
-    vnet = vnet_config()
+    vnet = AzureVM::vnet_config()
 
-    newVMConfig <- vm_config(image=imageConfig, keylogin=FALSE, os_disk_type ="Standard_LRS", ip=ipConfig) #VM CONFIG
+    newVMConfig <- AzureVM::vm_config(image=imageConfig, keylogin=FALSE, os_disk_type ="Standard_LRS", ip=ipConfig) #VM CONFIG
     newVM <- resourceGroup$create_vm(newVMName, login_user = userConfig, size="Standard_D2s_v3", config=newVMConfig, location=resourceGroup$location)
     # set tags
     print(newVM)

@@ -27,8 +27,8 @@ listContainers <- function(storageAccount, rgName = getOption('azurerg')){
     rg<-get_rg(rgName)
     storageObject <- rg$get_storage(storageAccount)
     be <- storageObject$get_blob_endpoint()
-    se <- storage_endpoint(be$url, be$key)
-    return(list_storage_containers(se))
+    se <- AzureStor::storage_endpoint(be$url, be$key)
+    return(AzureStor::list_storage_containers(se))
 
 }
 
