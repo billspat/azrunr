@@ -1,0 +1,6 @@
+{
+    "fileUris" : ["https://scriptvmcreationdiag.blob.core.windows.net/scripts/azrunr_script2.sh"],
+    "commandToExecute": "sh azrunr_script2.sh",
+    "storageAccountKey": "",
+    "storageAccountName": "scriptvmstorage"
+}

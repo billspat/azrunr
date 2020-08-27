@@ -1,0 +1,39 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "value": "scriptvm"
+        },
+        "adminUsername": {
+            "value": "will3298"
+        },
+        "authenticationType": {
+            "value": "password"
+        },
+        "adminPasswordOrKey": {
+            "value": "Will3298!"
+        },
+        "dnsLabelPrefix": {
+            "value": "will3298prefix"
+        },
+        "ubuntuOSVersion": {
+            "value": "18.04-LTS"
+        },
+        "location": {
+            "value": "eastus"
+        },
+        "VmSize": {
+            "value": "Standard_B2s"
+        },
+        "virtualNetworkName": {
+            "value": "vNet"
+        },
+        "subnetName": {
+            "value": "Subnet"
+        },
+        "networkSecurityGroupName": {
+            "value": "SecGroupNet"
+        }
+    }
+}
