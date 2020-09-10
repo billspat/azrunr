@@ -35,10 +35,11 @@ Developing/Using this package
     - You could copy the file  `example-Renviron` to `.Renviron` to start
   * The .Renviron should have the following entries 
 
+```
     AZUREUSER=<your azure id>
     AZURESUB=<azure subscription id>
     AZURERG=<resource group this will primarily be used with>
-
+```
   
 
 Note: The `.Renviron` file is read when you start R and creates environment variables you can access from your R session.  See https://rstats.wtf/r-startup.html for a good description.    
