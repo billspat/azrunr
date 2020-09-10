@@ -8,7 +8,7 @@
 # library(AzureStor)
 # library(stringr)
 
-
+# vector of names of all the resources in a resource group
 allResourceNames <- function(rgName = getOption('azurerg')){
     rg<-get_rg(rgName)
     # get a vector of the names of resources, each vector item named for the type of resource
@@ -17,12 +17,19 @@ allResourceNames <- function(rgName = getOption('azurerg')){
 
 }
 
+# given a collection of Azure resources, return a vector of their namespull out just the names
+resourceNameList <- function(resources){
+    all_names <- unlist(lapply(resources, function(x){x$name}))
+    return(all_names)
+}
+
+# return a list of all storage accounts.  From one you can get a list of containers
 storageAccounts <- function(rgName = getOption('azurerg')){
-    # return a list of all storage accounts.  From one you can get a list of containers
     rg<-get_rg(rgName)
     return(rg$list_resources(filter="resourceType eq 'Microsoft.Storage/storageAccounts'"))
 }
 
+# given a storage account name, get vector of its containers
 listContainers <- function(storageAccount, rgName = getOption('azurerg')){
     rg<-get_rg(rgName)
     storageObject <- rg$get_storage(storageAccount)
@@ -32,12 +39,14 @@ listContainers <- function(storageAccount, rgName = getOption('azurerg')){
 
 }
 
+# return vector of all containers in all storage accounts in a resource group
 listAllContainers <- function( rgName =getOption('azurerg') ) {
     rg <- get_rg(rgName)
     sa <- storageAccounts(rg)
     containerlist <- lapply(sa, rg=rg, listContainers)
 }
 
+# return list of resources that start with a string
 getResourcesByName <- function(namePart, rgName = getOption('azurerg') ){
     rg<-get_rg(rgName)
     resources <- rg$list_resources(filter=paste0("substringof('", namePart, "', name)"))
@@ -48,10 +57,6 @@ getResourcesByName <- function(namePart, rgName = getOption('azurerg') ){
     # these names <- all_resources[grep(namePattern, all_names)])
 }
 
-resourceNameList <- function(resources){
-    all_names <- unlist(lapply(resources, function(x){x$name}))
-    return(all_names)
-}
 
 
 
