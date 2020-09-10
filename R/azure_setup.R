@@ -78,6 +78,20 @@ get_sub <- function(azuresub=getOption('azuresub')){
 get_rg <- function(rgname = getOption('azurerg'), azuresub=getOption('azuresub')) {
     # this will only ask for login if necessary
     # but it does recreate the object every time... perhaps cache these objects
+
+
+  if(is.null(rgname)) {
+    # if rgname is not sent as a param, and if the option is not set => set_azure_options has not been run yet.
+    # try to run azure setup now (which may ask for a log-in)
+
+    # TODO this returns "NULL" if can't get a rg, should it return FALSE instead?
+
+    if (set_azure_options() == FALSE){
+      # couldn't run setup, so no RG can be gotten
+      # TODO raise exception?
+      return(NULL)}
+  }
+
   sub<- get_sub(azuresub)
     # one option for a cache is to compare the cached rg object's name with the string sent here
     # if they are different then load the new rg but otherwise return the cached rg
