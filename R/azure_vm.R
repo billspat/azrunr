@@ -34,7 +34,7 @@ vmFromImage <- function(newVMName, resourceGroup, imageID, vmUsername, vmPasswor
     # set tags
     print(newVM)
 
-    try(newVM$set_tags(comment=comment, created_by=Sys.info()['user'], created_on =  format(Sys.time(), "%Y-%m-%d %X")))
+    # try(newVM$set_tags(comment=comment, created_by=Sys.info()['user'], created_on =  format(Sys.time(), "%Y-%m-%d %X")))
 
     return(newVM)
 
