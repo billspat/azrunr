@@ -96,15 +96,7 @@
         "subnetAddressPrefix": "10.1.0.0/24",
         "addressPrefix": "10.1.0.0/16",
         "linuxConfiguration": {
-            "disablePasswordAuthentication": true,
-            "ssh": {
-                "publicKeys": [
-                    {
-                        "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-                        "keyData": "[parameters('adminPasswordOrKey')]"
-                    }
-                ]
-            }
+            "disablePasswordAuthentication": false
         }
     },
     "resources": [
@@ -146,17 +138,43 @@
             "properties": {
                 "securityRules": [
                     {
-                        "name": "SSH",
+                        "name": "HTTP",
                         "properties": {
-                            "priority": 1000,
+                            "priority": 100,
                             "protocol": "TCP",
                             "access": "Allow",
                             "direction": "Inbound",
                             "sourceAddressPrefix": "*",
                             "sourcePortRange": "*",
                             "destinationAddressPrefix": "*",
-                            "destinationPortRange": "22"
-                        }
+                            "destinationPortRange": "80"
+                                    }
+                    },
+                    {
+                        "name": "HTTPS",
+                        "properties": {
+                            "priority": 320,
+                            "protocol": "TCP",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "443"
+                                    }
+                     },
+                     {
+                        "name": "RStudio",
+                        "properties": {
+                            "priority": 101,
+                            "protocol": "Tcp",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "8787"
+                                    }
                     }
                 ]
             }

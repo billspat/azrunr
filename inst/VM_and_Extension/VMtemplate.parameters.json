@@ -12,7 +12,7 @@
             "value": "password"
         },
         "adminPasswordOrKey": {
-            "value": "Will3298!"
+            "value": "Will3298!pass"
         },
         "dnsLabelPrefix": {
             "value": "will3298prefix"
