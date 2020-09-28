@@ -1,6 +1,0 @@
-{
-    "fileUris" : ["https://scriptvmcreationdiag.blob.core.windows.net/scripts/azrunr_script3.sh"],
-    "commandToExecute": "sh azrunr_script3.sh",
-    "storageAccountKey": "StAM7StvdNNWRA0aJm7xrmT7Q0wR9VeriT7znlqmlmwjQIrKR7OBSlGRUWq4fWRKe6mtpVlxyWd+eGZEzHdRDw==",
-    "storageAccountName": "scriptvmstorage"
-}
