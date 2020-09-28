@@ -1,6 +1,6 @@
 #' azure_setup.R
 #' DRAFT
-#' functions to simplify set up Azure options for the subid and subscription
+#' functions to simplify set up Azure options for the azuresub and subscription
 #' and other Azure values that should not go into this library
 
 
@@ -22,20 +22,20 @@ azure_check <- function() {
 #'  ... your code to work with azure
 #' @return T/F depending on if az is setup and works.
 #' If the values in Renviron, or sent as params are not valid, the options are not set
-set_azure_options <- function(subid=NULL,azurerg=NULL){
-  if(is.null(subid)){
-    axuresub = Sys.getenv("AZURESUB")
+set_azure_options <- function(azuresub=NULL,azurerg=NULL){
+  if(is.null(azuresub)){
+    azuresub <- Sys.getenv("AZURESUB")
   }
 
-  subid = trimws(subid)
+  azuresub <- trimws(azuresub)
 
-  # check that this is a value subid
-  sub = get_sub(subid)
+  # check that this is a value azuresub
+  sub = get_sub(azuresub)
   # if not valid return false
   if(is.null(sub)) {return(FALSE)}
   # if valid, set option
   else {
-    options('subid' = subid)
+    options('azuresub' = azuresub)
   }
 
   if(is.null(azurerg)){
@@ -43,7 +43,7 @@ set_azure_options <- function(subid=NULL,azurerg=NULL){
   }
 
   azurerg = trimws(azurerg)
-  # check if this is a value rgname in this subid..
+  # check if this is a value rgname in this azuresub..
   rg <- get_rg(azurerg)
   if(is.null(rg)){ return(FALSE)}
   else {
@@ -56,13 +56,13 @@ set_azure_options <- function(subid=NULL,azurerg=NULL){
 }
 
 #' get the azure subscription object for the given sub id value
-#' can also be used to test if a the subid is valid (will return NULL)
+#' can also be used to test if a the azuresub is valid (will return NULL)
 #' requires Azure login and this function will initiate that
-#' @param subid optional string of subscriptoin id e.g xxxxxxxx-xxx-xxx-xxxx-xxxxxxxxxxxx
+#' @param azuresub optional string of subscriptoin id e.g xxxxxxxx-xxx-xxx-xxxx-xxxxxxxxxxxx
 #' @return AzureRMR subscription object, or NULL if invalid sub id
-get_sub <- function(subid=getOption('subid')){
+get_sub <- function(azuresub=getOption('azuresub')){
   azure_login<- AzureRMR::get_azure_login()
-  sub <- tryCatch(test<-azure_login$get_subscription(subid),
+  sub <- tryCatch(test<-azure_login$get_subscription(azuresub),
                   error=function(cond){
                     print(cond)
                     return(NULL)}, finally=function(cond){return(test)})
@@ -75,10 +75,24 @@ get_sub <- function(subid=getOption('subid')){
 #' the goal of this function is to allow the other functions to be flexible and make sending
 #' a resource group name optional by looking for global options
 #' @return AzureRMR ResourceGroup object
-get_rg <- function(rgname = getOption('azurerg'), subid=getOption('subid')) {
+get_rg <- function(rgname = getOption('azurerg'), azuresub=getOption('azuresub')) {
     # this will only ask for login if necessary
     # but it does recreate the object every time... perhaps cache these objects
-  sub<- get_sub(subid)
+
+
+  if(is.null(rgname)) {
+    # if rgname is not sent as a param, and if the option is not set => set_azure_options has not been run yet.
+    # try to run azure setup now (which may ask for a log-in)
+
+    # TODO this returns "NULL" if can't get a rg, should it return FALSE instead?
+
+    if (set_azure_options() == FALSE){
+      # couldn't run setup, so no RG can be gotten
+      # TODO raise exception?
+      return(NULL)}
+  }
+
+  sub<- get_sub(azuresub)
     # one option for a cache is to compare the cached rg object's name with the string sent here
     # if they are different then load the new rg but otherwise return the cached rg
   if(! is.null(sub)){
