@@ -1,6 +1,6 @@
 {
     "fileUris" : ["https://scriptvmstorage.blob.core.windows.net/scripts/azrunr_script.sh"],
     "commandToExecute": "sh azrunr_script.sh",
-    "storageAccountKey": "StAM7StvdNNWRA0aJm7xrmT7Q0wR9VeriT7znlqmlmwjQIrKR7OBSlGRUWq4fWRKe6mtpVlxyWd+eGZEzHdRDw==",
+    "storageAccountKey": "",
     "storageAccountName": "scriptvmstorage"
 }
