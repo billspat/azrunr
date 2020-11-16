@@ -29,8 +29,16 @@ vmFromImage <- function(newVMName, resourceGroup, imageID, vmUsername, vmPasswor
     #TODO use vnet config to connect to network security group
     vnet = AzureVM::vnet_config()
 
-    newVMConfig <- AzureVM::vm_config(image=imageConfig, keylogin=FALSE, os_disk_type ="Standard_LRS", ip=ipConfig) #VM CONFIG
-    newVM <- resourceGroup$create_vm(newVMName, login_user = userConfig, size="Standard_D2s_v3", config=newVMConfig, location=resourceGroup$location)
+    newVMConfig <- AzureVM::vm_config(image=imageConfig,
+                                      keylogin=FALSE,
+                                      os_disk_type ="Standard_LRS",
+                                      ip=ipConfig) #VM CONFIG
+
+    newVM <- resourceGroup$create_vm(newVMName,
+                                     login_user = userConfig,
+                                     size="Standard_D2s_v3",
+                                     config=newVMConfig,
+                                     location=resourceGroup$location)
     # set tags
     print(newVM)
 
@@ -40,9 +48,69 @@ vmFromImage <- function(newVMName, resourceGroup, imageID, vmUsername, vmPasswor
 
 }
 
+# create a data science vm using current azure options for username and ssh key
+# this is a stub function, and features for data disks etc will be added
+
+dsvm <- function(name, resourceGroup=NULL, vm_password=NULL) {
+    # first create a 'user' for the VM
+
+    # TODO check the name to match  ^[a-z][a-z0-9-]{1,61}[a-z0-9]$.
+
+    # password vs key
+    #  1) if password is sent, use that
+    #  2) if no password sent, check options for ssh key
+    #  3) if no ssh key, then fail
+    if( is.null(resourceGroup)){
+        resourceGroup = get_rg()
+    }
+
+    if(! is.null(vm_password)){
+        userconfig <- AzureVM::user_config(username=getOption('azureuser'),
+                                           password = vm_password)
+
+    } else {
+        if( ! is.null(getOption('azuresshkey'))) {
+            userconfig <- AzureVM::user_config(username=getOption('azureuser'),
+                                       sshkey = getOption('azuresshkey'))
+        } else {
+            warning("requires you send password parameter ,or set up sshkey option")
+            return(NULL)
+        }
+    }
+
+    # removed this param : sshkey = getOption('azuresshkey'),
+    # create the VM
+    message("creating VM")
+    newvm <- resourceGroup$create_vm(name=name,
+                            login_user=userconfig,
+                            managed_identity = FALSE,
+                            config = "ubuntu_dsvm_gen2",
+                            wait=TRUE)
+    return(newvm)
+
+}
 
 
-deleteVM <- function(vmname, rgName = getOption('azurerg')){
-    # this script assumes the related resources have the same name
+findcomputer <- function(res) {
+    if(stringr::str_detect(res$name,"Compute")){
+        return( TRUE)
+    } else {
+    return( FALSE)
+        }
+}
+
+
+vm_git_pull <- function(vm, gitrepository){
+    git_cmd = paste("git pull ", gitrepository)
+    vm$do_operation("runCommand",
+                    body=list(
+                        commandId="RunShellScript",
+                        script=as.list(git_cmd)
+                    ),
+                    encode="json",
+                    http_verb="POST")
+}
+
+vmFromTemplate <- function(resourceGroup, templatefile, paramsfile){
 
 }
