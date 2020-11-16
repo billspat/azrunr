@@ -22,35 +22,90 @@ azure_check <- function() {
 #'  ... your code to work with azure
 #' @return T/F depending on if az is setup and works.
 #' If the values in Renviron, or sent as params are not valid, the options are not set
-set_azure_options <- function(azuresub=NULL,azurerg=NULL){
+set_azure_options <- function(azuresub=NULL,azurerg=NULL,azureuser=NULL, verbose=FALSE){
+
+  ### SUBCRIPTION
   if(is.null(azuresub)){
+    # not sent as a parameter, look to the environment (e.g. .Renviron)
     azuresub <- Sys.getenv("AZURESUB")
   }
+
+  # if it's not passed as an argument, and not in the environment, fail
 
   azuresub <- trimws(azuresub)
 
   # check that this is a value azuresub
+  # get sub could use an existing log-in if it's not set in environment or here.
+  # passing a new sub-id to this will re-login
   sub = get_sub(azuresub)
-  # if not valid return false
-  if(is.null(sub)) {return(FALSE)}
+
+  # if not valid, or not setup, fail
+  if(is.null(sub)) {
+    warning("no valid subscription found")
+    return(FALSE)}
+
   # if valid, set option
   else {
     options('azuresub' = azuresub)
   }
 
+
+  #### RESOURCE GROUP
   if(is.null(azurerg)){
+    # not sent as a parameter, look to the environment (e.g. .Renviron)
     azurerg = Sys.getenv("AZURERG")
   }
 
   azurerg = trimws(azurerg)
   # check if this is a value rgname in this azuresub..
   rg <- get_rg(azurerg)
-  if(is.null(rg)){ return(FALSE)}
+
+  # if it's not passed as an argument, and not in the environment, fail
+  if(is.null(rg)){
+    warning("no valid resource group ")
+    return(FALSE)}
   else {
   # if valid, set option
   options('azurerg' = azurerg)
 
   }
+
+
+  ##### USER ACCOUNT
+  # this is a required setting and must at least be in the environment
+  # it's used when creating VMS.
+
+  if(is.null(azureuser)){
+    # not sent as a parameter, look to the environment (e.g. .Renviron)
+    azureuser <- Sys.getenv("AZUREUSER")  # AZUREUSER
+  }
+  # if it's not passed as an argument, and not in the environment, fail
+  if(is.null(azureuser)){
+    warning("no user name was sent, and none in Environment (AZUREUSER)")
+    return(FALSE)
+  }
+
+  azureuser = trimws(azureuser)
+
+  #TODO check that this is a valid azure user for this subscription
+  # for now, assume it is.  It's used for creating log-ins for VMs
+  # so for now, with no check, the VM user may not match the Azure portal user id
+  options('azureuser' = azureuser)
+
+
+  ##### optional ssh key
+  if(!is.null(Sys.getenv("AZURESSHKEY"))) {
+    options('azuresshkey'= Sys.getenv("AZURESSHKEY"))
+  }
+
+
+  if(verbose){
+    message(paste0("set options azuresub=",getOption('azuresub'),"azurerg=",getOption('azurerg'), "and azureuser=",getOption('azureuser')))
+    if(!is.null(getOption('azuresshkey'))){
+      message("set VM ssh key")
+    }
+  }
+
 
   return(TRUE)
 }
