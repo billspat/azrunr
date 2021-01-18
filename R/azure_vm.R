@@ -111,6 +111,12 @@ vm_git_pull <- function(vm, gitrepository){
                     http_verb="POST")
 }
 
-vmFromTemplate <- function(resourceGroup, templatefile, paramsfile){
-
+# This will create a VirtualMachine based on the parameters provided
+# This can be used with a shell script to provide extensions to the VM
+vmFromTemplate <- function(shellscript, storageAccount=getOption("azurestorage"), storageContainer=getOption("azurecontainer"))
+{
+    stor <- get_stor(storageAccount)
+    cont <- get_container(storageContainer)
+    AzureStor::storage_upload(cont, shellscript)
 }
+

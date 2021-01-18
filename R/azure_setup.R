@@ -169,3 +169,80 @@ set_storage_account <- function(){
 
 }
 
+#' set options for the azure storage account to use for this session
+#' @returns T/F if valid values were sent
+set_storage_options <- function(azurestorage=NULL, azurecontainer=NULL, storageaccesskey=NULL){
+  if(is.null(azurestorage)){
+    azurestorage = Sys.getenv("AZURESTOR")
+  }
+
+  azurestorage = trimws(azurestorage)
+  # check if this is a valid azurestorage in this azuresub.
+  stor <- get_stor(azurestorage)
+  if(is.null(stor)){ return(FALSE)}
+  else {
+    # if valid, set option
+    options('azurestorage' = azurestorage)
+  }
+  # Unsure what is going to be in the Renv for now, so having container be one
+  if(is.null(azurecontainer)){
+    azurecontainer = Sys.getenv("AZURECONTAINER")
+  }
+
+  azurecontainer = trimws(azurecontainer)
+  # check if this is a valid azurecontainer in this azurestorage
+  cont <- get_container(azurecontainer)
+  if(is.null(cont)){ return(FALSE) }
+  else {
+    options('azurecontainer'=azurecontainer)
+  }
+  if(is.null(storageaccesskey)){
+      storageaccesskey = Sys.getenv("STORAGEACCESSKEY")
+  }
+  storageaccesskey = trimws(storageaccesskey)
+  options('storageaccesskey'=storageaccesskey)
+  return(TRUE)
+
+}
+
+get_stor <- function(azurestor = getOption('azurestorage'), rgname = getOption('azurerg'))
+{
+  if (is.null(azurestor))
+  {
+    # The storage account has not been set by anything
+  }
+  # this is assuming that the sub has been set already
+  rg <- get_rg(rgname)
+  if(! is.null(rg)){
+    stor <- tryCatch(test<-rg$get_resource(type="Microsoft.Storage/storageAccounts", name=azurestor),
+                     error=function(cond){
+                       print(cond)
+                       return(NULL)}, finally=function(cond){return(test)})
+  } else {
+    stor <- NULL
+    }
+  return(stor)
+}
+
+get_container <- function(azurecontainer=getOption('azurecontainer'), azurestor=getOption('azurestorage'), rgname=getOption('azurerg'), storageaccesskey=getOption('storageaccesskey'))
+{
+  if (is.null(azurecontainer))
+  {
+    # The container has not been set by anything
+  }
+  rg<-get_rg(rgname)
+  if(! is.null(rg)){
+    stor <- get_stor(azurestor)
+    if(! is.null(stor)){
+      se <- AzureStor::storage_endpoint(stor$properties$primaryEndpoints$blob, key=storageaccesskey) # This cannot be the token, must be the storage account access key
+      cont <- tryCatch(test<-AzureStor::storage_container(se, azurecontainer),
+                       error=function(cond){
+                         print(cond)
+                         return(NULL)}, finally=function(cond){return(test)})
+    } else {
+      cont <- NULL
+    }
+  }
+  return(cont)
+}
+
