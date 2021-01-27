@@ -111,12 +111,49 @@ vm_git_pull <- function(vm, gitrepository){
                     http_verb="POST")
 }
 
-# This will create a VirtualMachine based on the parameters provided
-# This can be used with a shell script to provide extensions to the VM
-vmFromTemplate <- function(shellscript, storageAccount=getOption("azurestorage"), storageContainer=getOption("azurecontainer"))
+#'Launch a vm from a template file and a extension file provided
+#' @param vmName the name of the VM, also used as a prefix on all related resources created during the deployment
+#' @param templateFile the file path to the template json used to deploy the VM and other resources
+#' @param shellScript the file path to the extension script file
+#' @param adminPasswordOrKey ssh public key used to access the vm through ssh
+#' @param userPassword Rstudio password
+#' @param cpuSize the size of the cpu, one of the following list ("CPU-4GB", "CPU-7GB", "CPU-8GB", "CPU-14GB", "CPU-16GB", "GPU-56GB")
+#' @param ubuntuOSVersion the Ubuntu version of the VM, one of the following list ("18.04-LTS", "20_04-lts", "20_04-daily-lts-gen2")
+#' @param adminUsername the Username used to login to the VM, default to the azureuser option
+#' @param webUsername the Username used to login to RStudio, default to the azureuser option
+#' @param dnsNameForPublicIP unique naming for the PublicIP resource, default to the azureuser option
+#' @param storageAccount the name of the storage account linked to the vm, default to azurestorage option
+#' @param storageContainer the name of the container where the extension script is hosted, default to azurecontainer option
+#' @param storageKey the access key to the storage account linked to the vm, default to storageaccesskey option
+#' @param resourceGroup the name of the resource group that will contain all resources created, default to azurerg option
+vmFromTemplate <- function(vmName, templateFile, shellScript, adminPasswordOrKey, userPassword,
+                           cpuSize=c("CPU-4GB", "CPU-7GB", "CPU-8GB", "CPU-14GB", "CPU-16GB", "GPU-56GB"),
+                           ubuntuOSVersion=c("18.04-LTS", "20_04-lts", "20_04-daily-lts-gen2"),
+                           adminUsername=getOption("azureuser"),
+                           webUsername=getOption("azureuser"), dnsNameForPublicIP=getOption("azureuser"),
+                           storageAccount=getOption("azurestorage"),
+                           storageContainer=getOption("azurecontainer"), storageKey=getOption("storageaccesskey"),
+                           resourceGroup=getOption("azurerg")
+                           )
 {
+    # Parameter Evaluation
+    ubuntuOSVersion <- match.arg(ubuntuOSVersion)
+    cpuSize <- match.arg(cpuSize)
+
+    #Upload provided file to Azure file storage within the storageAccount and storageContainer provided
     stor <- get_stor(storageAccount)
     cont <- get_container(storageContainer)
-    AzureStor::storage_upload(cont, shellscript)
+    AzureStor::storage_upload(cont, shellScript)
+
+    # Launch a VM
+    rg <- get_rg(resourceGroup)
+    deploy <- rg$deploy_template(vmName, template=templateFile,
+                                 parameters=list('adminUsername'=adminUsername, 'webUsername'=webUsername,
+                                                 'dnsNameForPublicIP'=dnsNameForPublicIP, 'ubuntuOSVersion'=ubuntuOSVersion,
+                                                 'adminPasswordOrKey'=adminPasswordOrKey, '_artifactsLocation'=stor$properties$primaryEndpoints$blob,
+                                                 '_customScriptFile'=shellScript, 'userPassword'=userPassword,
+                                                 'storageAccount'=storageAccount, 'storageContainer'=storageContainer, 'storageKey'=storageKey,
+                                                 'namePrefix'=vmName, 'cpuSize'=cpuSize))
+
 }
 

@@ -1,0 +1,390 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "User name for the ssh admin /sudo access."
+      }
+    },
+    "webUsername": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "User name for the Web Server login."
+      }
+    },
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Globally unique DNS Name for the Public IP used to access the Web Server VM."
+      }
+    },
+    "ubuntuOSVersion": {
+      "type": "string",
+      "defaultValue": "20.04-lts",
+      "allowedValues": [
+        "18.04-LTS",
+        "20_04-lts",
+        "20_04-daily-lts-gen2"
+      ],
+      "metadata": {
+        "description": "The Ubuntu version for the Web Server VM.  Only one version currentlh allowed as some software depends on version"
+      }
+    },
+    "userPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "required parameter - the password for a user in the VM, sent to the custom script "
+      }
+    },
+    "_customScriptFile": {
+      "type": "string",
+      "metadata": {
+        "description": "The filename of the script in the scripts folder"
+      },
+      "defaultValue": "installrstudio.sh"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/billspat/learningaztemplates/master/rstudiovm/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "storageAccount": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "storage account to be mounted in the VM using blobfuse in custom script"
+      }
+    },
+    "storageContainer": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "container to mount and as mountpoint using blobfuse in custom script"
+      }
+    },
+    "storageKey": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "key for the storage to be mounted using blobfuse in custom script"
+      }
+    },
+    "namePrefix": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "rstudioDeployment",
+      "metadata": {
+        "description": "A naming prefix used for all resources created within this deployment"
+      }
+    },
+    "cpuSize": {
+      "type": "string",
+      "defaultValue": "CPU-8GB",
+      "allowedValues": [
+        "CPU-4GB",
+        "CPU-7GB",
+        "CPU-8GB",
+        "CPU-14GB",
+        "CPU-16GB",
+        "GPU-56GB"
+      ],
+      "metadata": {
+        "description": "Choose between CPU or GPU processing"
+      }
+    },
+    "timeStamp" : {
+      "type": "string",
+      "defaultValue": "[utcNow()]",
+      "metadata" : { "description" : "timestamp to be used for random values"}
+    }
+
+  },
+  "variables": {
+    "imagePublisher": "Canonical",
+    "imageOffers":{
+      "18.04-LTS": "UbuntuServer",
+      "20_04-lts": "0001-com-ubuntu-server-focal",
+      "20_04-daily-lts-gen2": "0001-com-ubuntu-server-focal-daily"
+    },
+    "nicName": "[concat(parameters('namePrefix'), parameters('dnsNameForPublicIP'), '-', uniqueString(resourceGroup().id))]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "publicIPAdressName": "[concat(parameters('namePrefix'), parameters('dnsNameForPublicIP'))]",
+    "vhdStorageType": "Standard_LRS",
+    "publicIPAddressType": "Dynamic",
+    "vmName": "[concat(parameters('namePrefix'), parameters('dnsNameForPublicIP'), '-', uniqueString(resourceGroup().id))]",
+    "vmSize": {
+      "CPU-4GB": "Standard_B2s",
+      "CPU-7GB": "Standard_DS2_v2",
+      "CPU-8GB": "Standard_D2s_v3",
+      "CPU-14GB": "Standard_DS3_v2",
+      "CPU-16GB": "Standard_D4s_v3",
+      "GPU-56GB": "Standard_NC6_Promo"
+    },
+    "virtualNetworkName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id, parameters('dnsNameForPublicIP')))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'),  variables('subnetName'))]",
+    "vhdStorageName": "[concat(take(parameters('namePrefix'), 11), uniqueString(resourceGroup().id))]",
+    "singleQuote": "'",
+    "frontEndNSGName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id, parameters('dnsNameForPublicIP')))]",
+    "scriptFolder": "scripts",
+    "resourceTags": {
+      "created_by": "[concat(parameters('adminUsername'))]",
+      "project": "templatetesting",
+      "deployment_tag": "[concat(parameters('namePrefix'),parameters('timeStamp'))]"
+      },
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
+  "outputs": {
+    "fqdn": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAdressName')).dnsSettings.fqdn]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('vhdStorageName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "properties": {
+        "accountType": "[variables('vhdStorageType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAdressName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('frontEndNSGName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh-rule",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "web-rule",
+            "properties": {
+              "description": "Allow Web",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "RStudio",
+            "properties": {
+              "priority": 102,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "8787"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAdressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAdressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')[parameters('cpuSize')]]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffers')[parameters('ubuntuOSVersion')]]",
+            "sku": "[parameters('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "PrepareServer",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+          ],
+          "tags": "[variables('resourceTags')]",
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "protectedSettings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), variables('scriptFolder'), '/', string(parameters('_customScriptFile')), parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('sh ', string(parameters('_customScriptFile')), ' ', string(parameters('webUsername')), ' ', string(parameters('userPassword')), ' ', variables('singleQuote'), string(parameters('storageAccount')), variables('singleQuote'), ' ', variables('singleQuote'), string(parameters('storageContainer')), variables('singleQuote'),' ', variables('singleQuote'), string(parameters('storageKey')), variables('singleQuote'))]",
+              "storageAccountName": "[parameters('storageAccount')]",
+              "storageAccountKey": "[parameters('storageKey')]"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
