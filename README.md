@@ -40,7 +40,7 @@ Developing/Using this package
     AZURESUB=<azure subscription id>
     AZURERG=<resource group this will primarily be used with>
 ```
-  
+  * There are additional entries for different processes. They can be seen in the file 'example-Renviron'
 
 Note: The `.Renviron` file is read when you start R and creates environment variables you can access from your R session.  See https://rstats.wtf/r-startup.html for a good description.    
 
@@ -78,8 +78,51 @@ current_rg <- get_rg()                 # get a resource group object
 current_rg$name                           # should be the same
 ```
 
+Working with storage
+---
+There is another set of options within R for working with storage. 
+
+Theses parameters can be set in the .Renviron file:
+```
+AZURESTOR=<your azure storage account name>
+AZURECONTAINER=<your azure container name>
+STORAGEACCESSKEY=<your azure storage access key>
+```
+Or set with the set_storage_options() function:
+```
+set_storage_options(azurestor, azurecontainer, storageaccesskey) # set R options for Azure storage
+```
+
+
+Launching a VM
+---
+
+A VM can be launched in different ways depending on the resources available and the intended deployment.
+
+**Launch VM with provided shell script extension**
+
+- If you have a shell script that is used for setup purposes on the VM, this can be run as a script extension.
+- Note: you will want to have run both set_azure_options() and set_azure_storage() prior to this code.
+- Note: This code is made to work with the provided deploy template located in inst/VM_From_Template/azuredeploy.json. Using another template may cause issues.
+- The VM will be located in the resource group set in r options.
+- The shell script will be uploaded to the storage account and container set in r options.
+
+The following can be used to create a vm, then run the shell script on the VM. 
+
+```
+set_azure_options() # set the r options for subscription and resource group
+set_azure_storage() # set the r options for storage account, container and storage access key
+vm_from_template(vmName, templateFile, shellScript, adminPasswordOrKey, userPassword, cpuSize, ubuntuOSVersion)
+```
+Parameters:
+- *vmName*: the name of the VM, also used as a prefix on all other related resources created during deployment
+- *templateFile*: the file path to the template json used to deploy the VM and other resources. There is a template provided at inst/VM_From_Template/azuredeploy.json
+- *shellScript*: the file path to the extension script file. There is a file provided0
+- *adminPasswordOrKey*: ssh public key used to access the vm through ssh
+- *userPassword*: Rstudio password
+- *cpuSize*: the size of the cpu, one of the following list ("CPU-4GB", "CPU-7GB", "CPU-8GB", "CPU-14GB", "CPU-16GB", "GPU-56GB")
+- *ubuntuOSVersion*: the Ubuntu version of the VM, one of the following list ("18.04-LTS", "20_04-lts", "20_04-daily-lts-gen2")
 
 
 
-
-
+This could become more flexible to use any template for deployment in the future.

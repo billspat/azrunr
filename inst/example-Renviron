@@ -5,3 +5,7 @@
 AZUREUSER=<yourazureusername>
 AZURESUB=<your azure subscription id>
 AZURERG=<your azure resource group name>
+AZURESSHKEY=<your ssh public key>
+AZURESTOR=<your azure storage account name>
+AZURECONTAINER=<your azure container name>
+STORAGEACCESSKEY=<your azure storage access key>

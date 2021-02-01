@@ -20,8 +20,17 @@ azure_check <- function() {
 #' usage
 #'   stopifnot(set_azure_options())
 #'  ... your code to work with azure
-#' @return T/F depending on if az is setup and works.
+#'
+#' The parameters can be explicitly set using this function
+#' otherwise the values set in the .Renviron file
+#' will be used.
+#'
 #' If the values in Renviron, or sent as params are not valid, the options are not set
+#' @param azuresub the azure subscription ID of the user
+#' @param azurerg the name of the resource group to be used
+#' @param azureuser the azure username of the user
+#' @param verbose TRUE/FALSE run in verbose mode.
+#' @return T/F depending on if az is setup and works.
 set_azure_options <- function(azuresub=NULL,azurerg=NULL,azureuser=NULL, verbose=FALSE){
 
   ### SUBCRIPTION
@@ -129,6 +138,8 @@ get_sub <- function(azuresub=getOption('azuresub')){
 #'
 #' the goal of this function is to allow the other functions to be flexible and make sending
 #' a resource group name optional by looking for global options
+#' @param rgname the name of the resource group, defaults to the getoption
+#' @param azuresub the azure subscription ID of the user, defaults to the getoption
 #' @return AzureRMR ResourceGroup object
 get_rg <- function(rgname = getOption('azurerg'), azuresub=getOption('azuresub')) {
     # this will only ask for login if necessary
@@ -170,19 +181,24 @@ set_storage_account <- function(){
 }
 
 #' set options for the azure storage account to use for this session
+#' These parameters can either be explicitly set using this function
+#' otherwise, the values within the .Renviron file will be used
+#' @param azurestor the name of the storage account to be used
+#' @param azurecontainer the name of the storage container to be used
+#' @param storageaccesskey the storage access key for the storage account to be used, found in the portal under "Access keys" in the storage account menu
 #' @returns T/F if valid values were sent
-set_storage_options <- function(azurestorage=NULL, azurecontainer=NULL, storageaccesskey=NULL){
-  if(is.null(azurestorage)){
-    azurestorage = Sys.getenv("AZURESTOR")
+set_storage_options <- function(azurestor=NULL, azurecontainer=NULL, storageaccesskey=NULL){
+  if(is.null(azurestor)){
+    azurestor = Sys.getenv("AZURESTOR")
   }
 
-  azurestorage = trimws(azurestorage)
-  # check if this is a valid azurestorage in this azuresub.
-  stor <- get_stor(azurestorage)
+  azurestor = trimws(azurestor)
+  # check if this is a valid azurestor in this azuresub.
+  stor <- get_stor(azurestor)
   if(is.null(stor)){ return(FALSE)}
   else {
     # if valid, set option
-    options('azurestorage' = azurestorage)
+    options('azurestor' = azurestor)
   }
   # Unsure what is going to be in the Renv for now, so having container be one
   if(is.null(azurecontainer)){
@@ -190,7 +206,7 @@ set_storage_options <- function(azurestorage=NULL, azurecontainer=NULL, storagea
   }
 
   azurecontainer = trimws(azurecontainer)
-  # check if this is a valid azurecontainer in this azurestorage
+  # check if this is a valid azurecontainer in this azurestor
   cont <- get_container(azurecontainer)
   if(is.null(cont)){ return(FALSE) }
   else {
@@ -205,7 +221,12 @@ set_storage_options <- function(azurestorage=NULL, azurecontainer=NULL, storagea
 
 }
 
-get_stor <- function(azurestor = getOption('azurestorage'), rgname = getOption('azurerg'))
+#' get the storage account object
+#'
+#' @param azurestor the name of the storage account, defaults to the getoption
+#' @param rgname the name of the resource group, defaults to the getoption
+#' @return the storage account object, null if it doesn't exist
+get_stor <- function(azurestor = getOption('azurestor'), rgname = getOption('azurerg'))
 {
   if (is.null(azurestor))
   {
@@ -224,7 +245,14 @@ get_stor <- function(azurestor = getOption('azurestorage'), rgname = getOption('
   return(stor)
 }
 
-get_container <- function(azurecontainer=getOption('azurecontainer'), azurestor=getOption('azurestorage'), rgname=getOption('azurerg'), storageaccesskey=getOption('storageaccesskey'))
+#' get the container object
+#'
+#' @param azurecontainer the name of the container, defaults to the getoption
+#' @param azurestor the name of the storage account, defaults to the getoption
+#' @param rgname the name of the resource group, defaults to the getoption
+#' @param storageaccesskey the storage access key for the given storage account, defaults to the getoption
+#' @return the container object, null if it doesn't exist
+get_container <- function(azurecontainer=getOption('azurecontainer'), azurestor=getOption('azurestor'), rgname=getOption('azurerg'), storageaccesskey=getOption('storageaccesskey'))
 {
   if (is.null(azurecontainer))
   {

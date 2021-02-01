@@ -122,16 +122,16 @@ vm_git_pull <- function(vm, gitrepository){
 #' @param adminUsername the Username used to login to the VM, default to the azureuser option
 #' @param webUsername the Username used to login to RStudio, default to the azureuser option
 #' @param dnsNameForPublicIP unique naming for the PublicIP resource, default to the azureuser option
-#' @param storageAccount the name of the storage account linked to the vm, default to azurestorage option
+#' @param storageAccount the name of the storage account linked to the vm, default to azurestor option
 #' @param storageContainer the name of the container where the extension script is hosted, default to azurecontainer option
 #' @param storageKey the access key to the storage account linked to the vm, default to storageaccesskey option
 #' @param resourceGroup the name of the resource group that will contain all resources created, default to azurerg option
-vmFromTemplate <- function(vmName, templateFile, shellScript, adminPasswordOrKey, userPassword,
+vm_from_template <- function(vmName, templateFile, shellScript, adminPasswordOrKey, userPassword,
                            cpuSize=c("CPU-4GB", "CPU-7GB", "CPU-8GB", "CPU-14GB", "CPU-16GB", "GPU-56GB"),
                            ubuntuOSVersion=c("18.04-LTS", "20_04-lts", "20_04-daily-lts-gen2"),
                            adminUsername=getOption("azureuser"),
                            webUsername=getOption("azureuser"), dnsNameForPublicIP=getOption("azureuser"),
-                           storageAccount=getOption("azurestorage"),
+                           storageAccount=getOption("azurestor"),
                            storageContainer=getOption("azurecontainer"), storageKey=getOption("storageaccesskey"),
                            resourceGroup=getOption("azurerg")
                            )
