@@ -6,6 +6,45 @@ deleteVMByName <- function(vmname, rgName = getOption('azurerg')){
 
 }
 
+#' Delete all the resources created by a deployment of a vm
+#' This will use a tag created by a deployment to delete all resources
+#' Deletion may take a minute or two for all resources to be cleaned up
+#' @param vmName the name of the vm created by the deployment to be deleted
+#' @param rgName the resource group of the resources, default to the get option azurerg
+deleteDeploymentResources <- function(vmName, rgName = getOption('azurerg'))
+{
+    vm <- get_vm(vmName, rgName, verbose=TRUE)
+    deployTag <- vm$get_tags()$deployment_tag # This will only work if the tag we are going to include on all resources is titled "deployment_tag"
+    rg <- get_rg(rgName)
+    deployResources <- rg$list_resources(filter=paste("tagName eq 'deployment_tag' and tagValue eq '", deployTag, "'", sep="")) # again this will work only with tag titled "deployment_tag"
+    vm$delete(wait=TRUE) # delete vm first so other resources are not being used
+    for (d in deployResources)
+    {
+        if (d$type != "Microsoft.Compute/virtualMachines/extensions")
+        {
+            d$delete(confirm=FALSE, wait=TRUE)
+        }
+    }
+}
+
+#' get the desired vm, if it exists
+#' @param vmName the name of the desired vm
+#' @param rgName the resource group of the vm, default to the get option azurerg
+#' @param rg the resource group object, used to make the function call less demanding if already known, default to NULL
+#' @return the vm if it exists, else null
+get_vm <- function(vmName, rgName=getOption('azurerg'), rg=NULL, verbose=FALSE)
+{
+    if (is.null(rg))
+    {
+        rg <- get_rg(rgName)
+    }
+    vm <- tryCatch(test <- rg$get_resource(type="Microsoft.Compute/virtualMachines", name=vmName),
+                   error=function(cond){
+                    if (verbose==TRUE)
+                    {print(cond)}
+                    return(NULL)}, finally=function(cond){return(test)})
+    return(vm)
+}
 
 
 # this will create a new VirtualMachine based on an image
@@ -111,7 +150,8 @@ vm_git_pull <- function(vm, gitrepository){
                     http_verb="POST")
 }
 
-#'Launch a vm from a template file and a extension file provided
+#' Launch a vm from a template file and a extension file provided
+#' Remember to set your working directory prior to use.
 #' @param vmName the name of the VM, also used as a prefix on all related resources created during the deployment
 #' @param templateFile the file path to the template json used to deploy the VM and other resources
 #' @param shellScript the file path to the extension script file
@@ -123,37 +163,46 @@ vm_git_pull <- function(vm, gitrepository){
 #' @param webUsername the Username used to login to RStudio, default to the azureuser option
 #' @param dnsNameForPublicIP unique naming for the PublicIP resource, default to the azureuser option
 #' @param storageAccount the name of the storage account linked to the vm, default to azurestor option
-#' @param storageContainer the name of the container where the extension script is hosted, default to azurecontainer option
+#' @param scriptContainer the name of the container where the extension script is hosted, default to azurecontainer option
 #' @param storageKey the access key to the storage account linked to the vm, default to storageaccesskey option
 #' @param resourceGroup the name of the resource group that will contain all resources created, default to azurerg option
+#' @param storageContainer the name of the container to be mounted to the vm
 vm_from_template <- function(vmName, templateFile, shellScript, adminPasswordOrKey, userPassword,
                            cpuSize=c("CPU-4GB", "CPU-7GB", "CPU-8GB", "CPU-14GB", "CPU-16GB", "GPU-56GB"),
                            ubuntuOSVersion=c("18.04-LTS", "20_04-lts", "20_04-daily-lts-gen2"),
                            adminUsername=getOption("azureuser"),
                            webUsername=getOption("azureuser"), dnsNameForPublicIP=getOption("azureuser"),
                            storageAccount=getOption("azurestor"),
-                           storageContainer=getOption("azurecontainer"), storageKey=getOption("storageaccesskey"),
-                           resourceGroup=getOption("azurerg")
+                           scriptContainer=getOption("azurecontainer"), storageKey=getOption("storageaccesskey"),
+                           resourceGroup=getOption("azurerg"), storageContainer=getOption("azurecontainer")
                            )
 {
     # Parameter Evaluation
     ubuntuOSVersion <- match.arg(ubuntuOSVersion)
     cpuSize <- match.arg(cpuSize)
 
-    #Upload provided file to Azure file storage within the storageAccount and storageContainer provided
+    # complete file path
+    templateFile <- paste(getwd(), templateFile, sep="")
+    shellScript <- paste(getwd(), shellScript, sep="")
+
+    # Upload provided file to Azure file storage within the storageAccount and storageContainer provided
     stor <- get_stor(storageAccount)
-    cont <- get_container(storageContainer)
+    cont <- get_container(scriptContainer)
     AzureStor::storage_upload(cont, shellScript)
+
+    # shellScript should now just be the file name
+    shellScript = basename(shellScript)
 
     # Launch a VM
     rg <- get_rg(resourceGroup)
+
     deploy <- rg$deploy_template(vmName, template=templateFile,
                                  parameters=list('adminUsername'=adminUsername, 'webUsername'=webUsername,
                                                  'dnsNameForPublicIP'=dnsNameForPublicIP, 'ubuntuOSVersion'=ubuntuOSVersion,
                                                  'adminPasswordOrKey'=adminPasswordOrKey, '_artifactsLocation'=stor$properties$primaryEndpoints$blob,
                                                  '_customScriptFile'=shellScript, 'userPassword'=userPassword,
                                                  'storageAccount'=storageAccount, 'storageContainer'=storageContainer, 'storageKey'=storageKey,
-                                                 'namePrefix'=vmName, 'cpuSize'=cpuSize))
-
+                                                 'namePrefix'=vmName, 'cpuSize'=cpuSize, '_scriptContainer'=scriptContainer))
+    return(deploy)
 }
 

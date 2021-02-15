@@ -88,7 +88,12 @@ AZURESTOR=<your azure storage account name>
 AZURECONTAINER=<your azure container name>
 STORAGEACCESSKEY=<your azure storage access key>
 ```
-Or set with the set_storage_options() function:
+You will then want to run the following to set the R options:
+```
+set_storage_options() # set R options for Azure storage
+```
+
+The R options can alternatively be set with the following:
 ```
 set_storage_options(azurestor, azurecontainer, storageaccesskey) # set R options for Azure storage
 ```
@@ -104,7 +109,8 @@ A VM can be launched in different ways depending on the resources available and 
 - If you have a shell script that is used for setup purposes on the VM, this can be run as a script extension.
 - Note: you will want to have run both set_azure_options() and set_azure_storage() prior to this code.
 - Note: This code is made to work with the provided deploy template located in inst/VM_From_Template/azuredeploy.json. Using another template may cause issues.
-- The VM will be located in the resource group set in r options.
+- The VM and its associated resources will be located in the resource group set in r options.
+- All resources created will be prefixed with the vmName provided.
 - The shell script will be uploaded to the storage account and container set in r options.
 
 The following can be used to create a vm, then run the shell script on the VM. 
@@ -117,12 +123,24 @@ vm_from_template(vmName, templateFile, shellScript, adminPasswordOrKey, userPass
 Parameters:
 - *vmName*: the name of the VM, also used as a prefix on all other related resources created during deployment
 - *templateFile*: the file path to the template json used to deploy the VM and other resources. There is a template provided at inst/VM_From_Template/azuredeploy.json
-- *shellScript*: the file path to the extension script file. There is a file provided0
+- *shellScript*: the file path to the extension script file. There is a file provided at inst/VM_From_Template/installrstudio_ubuntu20.sh
 - *adminPasswordOrKey*: ssh public key used to access the vm through ssh
 - *userPassword*: Rstudio password
 - *cpuSize*: the size of the cpu, one of the following list ("CPU-4GB", "CPU-7GB", "CPU-8GB", "CPU-14GB", "CPU-16GB", "GPU-56GB")
 - *ubuntuOSVersion*: the Ubuntu version of the VM, one of the following list ("18.04-LTS", "20_04-lts", "20_04-daily-lts-gen2")
 
+
+**Accessing the launched VM**
+
+- The deployment can take a while (10 minutes) to complete depending on the content of the extension. 
+
+- The deployment status can be found in the Azure Portal under the resource group -> Deployments. It will be listed with the name provided for the vmName parameter.
+
+- The VM can then be accessed through rstudio server by pasting the IP address found on the portal with ":8787" following in the browser in this format: *"xx.xxx.xxx.xx:8787"*.
+
+- You can then login to rstudio server with the userName and userPassword that were used to launch the vm.
+
+- NOTE: the userName is default to the azureuser option set in the .Renviron or with set_azure_options().
 
 
 This could become more flexible to use any template for deployment in the future.

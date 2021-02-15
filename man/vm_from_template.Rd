@@ -2,7 +2,8 @@
 % Please edit documentation in R/azure_vm.R
 \name{vm_from_template}
 \alias{vm_from_template}
-\title{Launch a vm from a template file and a extension file provided}
+\title{Launch a vm from a template file and a extension file provided
+Remember to set your working directory prior to use.}
 \usage{
 vm_from_template(
   vmName,
@@ -16,9 +17,10 @@ vm_from_template(
   webUsername = getOption("azureuser"),
   dnsNameForPublicIP = getOption("azureuser"),
   storageAccount = getOption("azurestor"),
-  storageContainer = getOption("azurecontainer"),
+  scriptContainer = getOption("azurecontainer"),
   storageKey = getOption("storageaccesskey"),
-  resourceGroup = getOption("azurerg")
+  resourceGroup = getOption("azurerg"),
+  storageContainer = getOption("azurecontainer")
 )
 }
 \arguments{
@@ -44,12 +46,15 @@ vm_from_template(
 
 \item{storageAccount}{the name of the storage account linked to the vm, default to azurestor option}
 
-\item{storageContainer}{the name of the container where the extension script is hosted, default to azurecontainer option}
+\item{scriptContainer}{the name of the container where the extension script is hosted, default to azurecontainer option}
 
 \item{storageKey}{the access key to the storage account linked to the vm, default to storageaccesskey option}
 
 \item{resourceGroup}{the name of the resource group that will contain all resources created, default to azurerg option}
+
+\item{storageContainer}{the name of the container to be mounted to the vm}
 }
 \description{
 Launch a vm from a template file and a extension file provided
+Remember to set your working directory prior to use.
 }

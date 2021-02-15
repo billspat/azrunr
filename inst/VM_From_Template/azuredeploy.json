@@ -44,10 +44,17 @@
     "_customScriptFile": {
       "type": "string",
       "metadata": {
-        "description": "The filename of the script in the scripts folder"
+        "description": "The filename of the script in the scriptContainer"
       },
       "defaultValue": "installrstudio.sh"
     },
+	"_scriptContainer": {
+	  "type": "string",
+	  "metadata": {
+		"description": "The azure container that will hold the script"
+	  },
+	  "defaultValue": "scripts"
+	},
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -165,7 +172,6 @@
     "vhdStorageName": "[concat(take(parameters('namePrefix'), 11), uniqueString(resourceGroup().id))]",
     "singleQuote": "'",
     "frontEndNSGName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id, parameters('dnsNameForPublicIP')))]",
-    "scriptFolder": "scripts",
     "resourceTags": {
       "created_by": "[concat(parameters('adminUsername'))]",
       "project": "templatetesting",
@@ -376,7 +382,7 @@
             "autoUpgradeMinorVersion": true,
             "protectedSettings": {
               "fileUris": [
-                "[concat(parameters('_artifactsLocation'), variables('scriptFolder'), '/', string(parameters('_customScriptFile')), parameters('_artifactsLocationSasToken'))]"
+                "[concat(parameters('_artifactsLocation'), string(parameters('_scriptContainer')), '/', string(parameters('_customScriptFile')), parameters('_artifactsLocationSasToken'))]"
               ],
               "commandToExecute": "[concat('sh ', string(parameters('_customScriptFile')), ' ', string(parameters('webUsername')), ' ', string(parameters('userPassword')), ' ', variables('singleQuote'), string(parameters('storageAccount')), variables('singleQuote'), ' ', variables('singleQuote'), string(parameters('storageContainer')), variables('singleQuote'),' ', variables('singleQuote'), string(parameters('storageKey')), variables('singleQuote'))]",
               "storageAccountName": "[parameters('storageAccount')]",
