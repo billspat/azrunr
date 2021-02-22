@@ -20,7 +20,8 @@ vm_from_template(
   scriptContainer = getOption("azurecontainer"),
   storageKey = getOption("storageaccesskey"),
   resourceGroup = getOption("azurerg"),
-  storageContainer = getOption("azurecontainer")
+  storageContainer = getOption("azurecontainer"),
+  wait = TRUE
 )
 }
 \arguments{
@@ -53,6 +54,8 @@ vm_from_template(
 \item{resourceGroup}{the name of the resource group that will contain all resources created, default to azurerg option}
 
 \item{storageContainer}{the name of the container to be mounted to the vm}
+
+\item{wait}{if true, wait until the vm deployment is complete to return, default true}
 }
 \description{
 Launch a vm from a template file and a extension file provided

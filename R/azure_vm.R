@@ -11,19 +11,30 @@ deleteVMByName <- function(vmname, rgName = getOption('azurerg')){
 #' Deletion may take a minute or two for all resources to be cleaned up
 #' @param vmName the name of the vm created by the deployment to be deleted
 #' @param rgName the resource group of the resources, default to the get option azurerg
-deleteDeploymentResources <- function(vmName, rgName = getOption('azurerg'))
+delete_deployment_resources <- function(vmName, rgName = getOption('azurerg'))
 {
     vm <- get_vm(vmName, rgName, verbose=TRUE)
     deployTag <- vm$get_tags()$deployment_tag # This will only work if the tag we are going to include on all resources is titled "deployment_tag"
     rg <- get_rg(rgName)
     deployResources <- rg$list_resources(filter=paste("tagName eq 'deployment_tag' and tagValue eq '", deployTag, "'", sep="")) # again this will work only with tag titled "deployment_tag"
     vm$delete(wait=TRUE) # delete vm first so other resources are not being used
+    gotDisk <- FALSE # Need to know if the disk was picked up, as it does not appear in the resource list until some time after the deployment
+    diskName <- vm$properties$storageProfile$osDisk$name
     for (d in deployResources)
     {
         if (d$type != "Microsoft.Compute/virtualMachines/extensions")
         {
             d$delete(confirm=FALSE, wait=TRUE)
         }
+        if (d$type == "Microsoft.Compute/disks")
+        {
+            gotDisk <- TRUE
+        }
+    }
+    if (gotDisk == FALSE)
+    {
+        disk <- getResourcesByName(diskName)[[1]]
+        disk$delete(confirm=FALSE, wait=TRUE)
     }
 }
 
@@ -167,6 +178,7 @@ vm_git_pull <- function(vm, gitrepository){
 #' @param storageKey the access key to the storage account linked to the vm, default to storageaccesskey option
 #' @param resourceGroup the name of the resource group that will contain all resources created, default to azurerg option
 #' @param storageContainer the name of the container to be mounted to the vm
+#' @param wait if true, wait until the vm deployment is complete to return, default true
 vm_from_template <- function(vmName, templateFile, shellScript, adminPasswordOrKey, userPassword,
                            cpuSize=c("CPU-4GB", "CPU-7GB", "CPU-8GB", "CPU-14GB", "CPU-16GB", "GPU-56GB"),
                            ubuntuOSVersion=c("18.04-LTS", "20_04-lts", "20_04-daily-lts-gen2"),
@@ -174,8 +186,8 @@ vm_from_template <- function(vmName, templateFile, shellScript, adminPasswordOrK
                            webUsername=getOption("azureuser"), dnsNameForPublicIP=getOption("azureuser"),
                            storageAccount=getOption("azurestor"),
                            scriptContainer=getOption("azurecontainer"), storageKey=getOption("storageaccesskey"),
-                           resourceGroup=getOption("azurerg"), storageContainer=getOption("azurecontainer")
-                           )
+                           resourceGroup=getOption("azurerg"), storageContainer=getOption("azurecontainer"),
+                           wait = TRUE)
 {
     # Parameter Evaluation
     ubuntuOSVersion <- match.arg(ubuntuOSVersion)
@@ -202,7 +214,8 @@ vm_from_template <- function(vmName, templateFile, shellScript, adminPasswordOrK
                                                  'adminPasswordOrKey'=adminPasswordOrKey, '_artifactsLocation'=stor$properties$primaryEndpoints$blob,
                                                  '_customScriptFile'=shellScript, 'userPassword'=userPassword,
                                                  'storageAccount'=storageAccount, 'storageContainer'=storageContainer, 'storageKey'=storageKey,
-                                                 'namePrefix'=vmName, 'cpuSize'=cpuSize, '_scriptContainer'=scriptContainer))
+                                                 'namePrefix'=vmName, 'cpuSize'=cpuSize, '_scriptContainer'=scriptContainer), wait=wait)
+
     return(deploy)
 }
 
