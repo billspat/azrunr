@@ -55,7 +55,9 @@ deploy <- vm_from_template(vmname, templateFile="/inst/VM_From_Template/azuredep
                            shellScript="/inst/VM_From_Template/installrstudio_ubuntu20.sh", adminPasswordOrKey,
                            userpassword, cpuSize="CPU-4GB", ubuntuOSVersion="20_04-lts")
 # This process may take around 10 minutes to complete.
+# This function will print relevant information about the vm once it has been deployed
 ```
+
 
 All of these resources can be easily deleted using the delete_deployment_resources() function.
 All that is required to delete the resources is the vm name, and the resource group that is already set

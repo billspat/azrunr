@@ -216,6 +216,20 @@ vm_from_template <- function(vmName, templateFile, shellScript, adminPasswordOrK
                                                  'storageAccount'=storageAccount, 'storageContainer'=storageContainer, 'storageKey'=storageKey,
                                                  'namePrefix'=vmName, 'cpuSize'=cpuSize, '_scriptContainer'=scriptContainer), wait=wait)
 
+    for (d in deploy$list_resources())
+    {
+        if (d$type == "Microsoft.Network/publicIPAddresses")
+        {
+            ip <- d$properties$ipAddress # Ip address used to connect to vm
+        }
+        if (d$type == "Microsoft.Compute/virtualMachines")
+        {
+            vm <- d$properties$osProfile$computerName
+        }
+    }
+    print(paste("The VM, and other resources, can be found in the Azure portal under the resource group:", resourceGroup,  "with the provisioned VM Name:", vm))
+    print(paste("To connect to rstudio, paste address: ", ip, ":8787 into a browser, login to rstudio server with username: ", deploy$properties$parameters$webUsername$value, " and password: " , userPassword, sep=""))
+    print(paste("To connect via ssh, use command: ssh ", deploy$properties$parameters$adminUsername$value, "@", ip, sep=""))
     return(deploy)
 }
 
