@@ -21,7 +21,7 @@ To start, we will log in to Azure using the following code
 library(azrunr)
 
 # this will access an existing login or prompt you to create a new one
-login <- get_azure_login()
+set_azure_login()
 
 ```
 

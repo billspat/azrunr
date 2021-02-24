@@ -17,12 +17,14 @@ azure_check <- function() {
 #' access an existing login to azure or create a new one
 #' if a new login is to be created, there will be a link pasted in the console
 #' that must be visited, instructions are displayed in the console as well
+#'
+#' The getOption "login" will be set to this object, used in other functions
 #' @return the azure login
-get_azure_login <- function() {
+set_azure_login <- function() {
   login <- tryCatch(test<-AzureRMR::get_azure_login(),
            error=function(cond){
              return(AzureRMR::create_azure_login())}, finally=function(cond){return(test)})
-  return(login)
+  options("login" = login)
 }
 
 #' read azure defaults from the environment to set package options.
@@ -137,8 +139,7 @@ set_azure_options <- function(azuresub=NULL,azurerg=NULL,azureuser=NULL, verbose
 #' @param azuresub optional string of subscriptoin id e.g xxxxxxxx-xxx-xxx-xxxx-xxxxxxxxxxxx
 #' @return AzureRMR subscription object, or NULL if invalid sub id
 get_sub <- function(azuresub=getOption('azuresub')){
-  azure_login <- get_azure_login()
-  sub <- tryCatch(test<-azure_login$get_subscription(azuresub),
+  sub <- tryCatch(test<-getOption("login")$get_subscription(azuresub),
                   error=function(cond){
                     print(cond)
                     return(NULL)}, finally=function(cond){return(test)})
