@@ -8,6 +8,9 @@ set_azure_options(
   azuresub = NULL,
   azurerg = NULL,
   azureuser = NULL,
+  azurestor = NULL,
+  azurecontainer = NULL,
+  storageaccesskey = NULL,
   verbose = FALSE
 )
 }
@@ -17,6 +20,12 @@ set_azure_options(
 \item{azurerg}{the name of the resource group to be used}
 
 \item{azureuser}{the azure username of the user}
+
+\item{azurestor}{the name of the storage account to be used}
+
+\item{azurecontainer}{the name of the storage container to be used}
+
+\item{storageaccesskey}{the storage access key for the storage account to be used, found in the portal under "Access keys" in the storage account menu}
 
 \item{verbose}{TRUE/FALSE run in verbose mode.}
 }

@@ -28,20 +28,25 @@ set_azure_login()
 After a successful login, we can begin setting up the required parameters
 that perform various operations and streamline the process.
 
-```{r param setup, include=TRUE}
-# Setting parameters using these functions will set the r options used within the package
-# These parameters will be checked to ensure they are valid
-set_azure_options(azuresub, azurerg, azureuser)
-set_storage_options(azurestor, azurecontainer, storageaccesskey)
 
-# options can be seen using getOption("option_name") - the option names are the same as the parameter names in the following lines of code
-getOption("azuresub")
+Various parameters are required to run processes and launch virtual machines within the package, these include:
+AZUREUSER - The username for the azure profile used
+AZURESUB - The Azure subscription ID
+AZURERG - An Azure resource group name
+AZURESSHKEY - The users ssh key 
+AZURESTOR - A storage account name, this storage account should be located in the above azure resource group
+AZURECONTAINER - The name of a container within the storage account
+STORAGEACCESSKEY - The access key for the above storage account, can be found within the Azure Portal
 
-# Alternatively, these parameters can be set in a .Renviron file.
+These parameters can be set in a .Renviron file. They will be loaded as R is launched.
 
-# add procedure for .Renviron file
+```{r .Renviron, include=TRUE}
+set_azure_options()
+
+# If the .Renviron file is changed at any point, you will want to restart R and rerun the above function.
+
+getOption("azurerg")
 ```
-
 Now that our parameters are set, the remainder of the package is opened up for easy use
 
 Launching a vm can be done with the use of a template and parameters.
@@ -50,17 +55,22 @@ NOTE: this function is not very flexible and is only guarenteed to work with the
 ```{r vm from template, include=TRUE}
 # the following will provision a vm and resources based on the parameters we have already set as well as a few more
 # There are templateFile and shellScripts available within the /inst/VM_From_Template folder named azuredeploy.json and isntallrstudio_ubuntu20.sh
+vmname = "testvm"
+userpassword = "testpassword"
 
 deploy <- vm_from_template(vmname, templateFile="/inst/VM_From_Template/azuredeploy.json",
-                           shellScript="/inst/VM_From_Template/installrstudio_ubuntu20.sh", adminPasswordOrKey,
-                           userpassword, cpuSize="CPU-4GB", ubuntuOSVersion="20_04-lts")
+                           shellScript="/inst/VM_From_Template/installrstudio_ubuntu20.sh",
+                           userpassword, cpuSize="CPU-4GB",
+                           ubuntuOSVersion="20_04-lts")
 # This process may take around 10 minutes to complete.
 # This function will print relevant information about the vm once it has been deployed
+# Naming convention is unique to the resource group
 ```
 
 
 All of these resources can be easily deleted using the delete_deployment_resources() function.
 All that is required to delete the resources is the vm name, and the resource group that is already set
 ```{r delete resources}
+vmname = ""
 delete_deployment_resources(vmname)
 ```

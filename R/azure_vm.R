@@ -14,12 +14,13 @@ deleteVMByName <- function(vmname, rgName = getOption('azurerg')){
 delete_deployment_resources <- function(vmName, rgName = getOption('azurerg'))
 {
     vm <- get_vm(vmName, rgName, verbose=TRUE)
+    diskName <- vm$properties$storageProfile$osDisk$name
     deployTag <- vm$get_tags()$deployment_tag # This will only work if the tag we are going to include on all resources is titled "deployment_tag"
     rg <- get_rg(rgName)
     deployResources <- rg$list_resources(filter=paste("tagName eq 'deployment_tag' and tagValue eq '", deployTag, "'", sep="")) # again this will work only with tag titled "deployment_tag"
     vm$delete(wait=TRUE) # delete vm first so other resources are not being used
     gotDisk <- FALSE # Need to know if the disk was picked up, as it does not appear in the resource list until some time after the deployment
-    diskName <- vm$properties$storageProfile$osDisk$name
+
     for (d in deployResources)
     {
         if (d$type != "Microsoft.Compute/virtualMachines/extensions")
@@ -36,6 +37,7 @@ delete_deployment_resources <- function(vmName, rgName = getOption('azurerg'))
         disk <- getResourcesByName(diskName)[[1]]
         disk$delete(confirm=FALSE, wait=TRUE)
     }
+    print("All resources have been deleted", quote=FALSE)
 }
 
 #' get the desired vm, if it exists
@@ -166,8 +168,8 @@ vm_git_pull <- function(vm, gitrepository){
 #' @param vmName the name of the VM, also used as a prefix on all related resources created during the deployment
 #' @param templateFile the file path to the template json used to deploy the VM and other resources
 #' @param shellScript the file path to the extension script file
+#' #' @param userPassword Rstudio password
 #' @param adminPasswordOrKey ssh public key used to access the vm through ssh
-#' @param userPassword Rstudio password
 #' @param cpuSize the size of the cpu, one of the following list ("CPU-4GB", "CPU-7GB", "CPU-8GB", "CPU-14GB", "CPU-16GB", "GPU-56GB")
 #' @param ubuntuOSVersion the Ubuntu version of the VM, one of the following list ("18.04-LTS", "20_04-lts", "20_04-daily-lts-gen2")
 #' @param adminUsername the Username used to login to the VM, default to the azureuser option
@@ -179,7 +181,7 @@ vm_git_pull <- function(vm, gitrepository){
 #' @param resourceGroup the name of the resource group that will contain all resources created, default to azurerg option
 #' @param storageContainer the name of the container to be mounted to the vm
 #' @param wait if true, wait until the vm deployment is complete to return, default true
-vm_from_template <- function(vmName, templateFile, shellScript, adminPasswordOrKey, userPassword,
+vm_from_template <- function(vmName, templateFile, shellScript, userPassword, adminPasswordOrKey=getOption("azuresshkey"),
                            cpuSize=c("CPU-4GB", "CPU-7GB", "CPU-8GB", "CPU-14GB", "CPU-16GB", "GPU-56GB"),
                            ubuntuOSVersion=c("18.04-LTS", "20_04-lts", "20_04-daily-lts-gen2"),
                            adminUsername=getOption("azureuser"),
@@ -218,7 +220,7 @@ vm_from_template <- function(vmName, templateFile, shellScript, adminPasswordOrK
 
     for (d in deploy$list_resources())
     {
-        if (d$type == "Microsoft.Network/publicIPAddresses")
+       if (d$type == "Microsoft.Network/publicIPAddresses")
         {
             ip <- d$properties$ipAddress # Ip address used to connect to vm
         }
@@ -227,9 +229,9 @@ vm_from_template <- function(vmName, templateFile, shellScript, adminPasswordOrK
             vm <- d$properties$osProfile$computerName
         }
     }
-    print(paste("The VM, and other resources, can be found in the Azure portal under the resource group:", resourceGroup,  "with the provisioned VM Name:", vm))
-    print(paste("To connect to rstudio, paste address: ", ip, ":8787 into a browser, login to rstudio server with username: ", deploy$properties$parameters$webUsername$value, " and password: " , userPassword, sep=""))
-    print(paste("To connect via ssh, use command: ssh ", deploy$properties$parameters$adminUsername$value, "@", ip, sep=""))
+    print(paste("The VM, and other resources, can be found in the Azure portal under the resource group:", resourceGroup,  "with the provisioned VM Name:", vm), quote=FALSE)
+    print(paste("To connect to rstudio, paste address: http://", ip, ":8787 into a browser, login to rstudio server with username: ", deploy$properties$parameters$webUsername$value, " and password: " , userPassword, sep=""), quote=FALSE)
+    print(paste("To connect via ssh, use command: ssh ", deploy$properties$parameters$adminUsername$value, "@", ip, sep=""), quote=FALSE)
     return(deploy)
 }
 

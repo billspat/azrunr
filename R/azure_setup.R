@@ -29,6 +29,7 @@ set_azure_login <- function() {
 
 #' read azure defaults from the environment to set package options.
 #'
+#'
 #' call this function prior to using any of the functions in this library
 #' this perhaps should be called when the package loads and/or at beginning of most of the functions
 #' usage
@@ -43,9 +44,12 @@ set_azure_login <- function() {
 #' @param azuresub the azure subscription ID of the user
 #' @param azurerg the name of the resource group to be used
 #' @param azureuser the azure username of the user
+#' @param azurestor the name of the storage account to be used
+#' @param azurecontainer the name of the storage container to be used
+#' @param storageaccesskey the storage access key for the storage account to be used, found in the portal under "Access keys" in the storage account menu
 #' @param verbose TRUE/FALSE run in verbose mode.
 #' @return T/F depending on if az is setup and works.
-set_azure_options <- function(azuresub=NULL,azurerg=NULL,azureuser=NULL, verbose=FALSE){
+set_azure_options <- function(azuresub=NULL,azurerg=NULL,azureuser=NULL, azurestor=NULL, azurecontainer=NULL, storageaccesskey=NULL, verbose=FALSE){
 
   ### SUBCRIPTION
   if(is.null(azuresub)){
@@ -64,7 +68,7 @@ set_azure_options <- function(azuresub=NULL,azurerg=NULL,azureuser=NULL, verbose
 
   # if not valid, or not setup, fail
   if(is.null(sub)) {
-    warning("no valid subscription found")
+    warning("Invalid subscription ID")
     return(FALSE)}
 
   # if valid, set option
@@ -85,7 +89,7 @@ set_azure_options <- function(azuresub=NULL,azurerg=NULL,azureuser=NULL, verbose
 
   # if it's not passed as an argument, and not in the environment, fail
   if(is.null(rg)){
-    warning("no valid resource group ")
+    warning("Invalid resource group ")
     return(FALSE)}
   else {
   # if valid, set option
@@ -122,14 +126,56 @@ set_azure_options <- function(azuresub=NULL,azurerg=NULL,azureuser=NULL, verbose
   }
 
 
+  ##### STORAGE ACCOUNT
+  if(is.null(azurestor)){
+    azurestor = Sys.getenv("AZURESTOR")
+  }
+  if(azurestor != ""){
+    azurestor = trimws(azurestor)
+    # check if this is a valid azurestor in this azuresub.
+    stor <- get_stor(azurestor)
+    if(is.null(stor)){
+      warning("Invalid storage account name")
+      return(FALSE)}
+    else {
+      # if valid, set option
+      options('azurestor' = azurestor)
+    }
+  }
+
+  ##### CONTAINER NAME
+  if(is.null(azurecontainer)){
+    azurecontainer = Sys.getenv("AZURECONTAINER")
+  }
+
+  if(azurecontainer != ""){
+    azurecontainer = trimws(azurecontainer)
+    # check if this is a valid azurecontainer in this azurestor
+    cont <- get_container(azurecontainer)
+    if(is.null(cont)){
+      warning("Invalid container name")
+      return(FALSE) }
+    else {
+      options('azurecontainer'=azurecontainer)
+    }
+  }
+
+  ##### STORAGE ACCESS KEY
+  # check somehow if possible, may not be
+  if(is.null(storageaccesskey)){
+    storageaccesskey = Sys.getenv("STORAGEACCESSKEY")
+  }
+  storageaccesskey = trimws(storageaccesskey)
+  options('storageaccesskey'=storageaccesskey)
+
+
   if(verbose){
     message(paste0("set options azuresub=",getOption('azuresub'),"azurerg=",getOption('azurerg'), "and azureuser=",getOption('azureuser')))
+    message(paste0("set options azurestor=",getOption('azurestor'),"azurecontainer=",getOption('azurecontainer'), "and storageaccesskey=",getOption('storageaccesskey')))
     if(!is.null(getOption('azuresshkey'))){
       message("set VM ssh key")
     }
   }
-
-
   return(TRUE)
 }
 
@@ -193,46 +239,6 @@ set_storage_account <- function(){
 
 }
 
-#' set options for the azure storage account to use for this session
-#' These parameters can either be explicitly set using this function
-#' otherwise, the values within the .Renviron file will be used
-#' @param azurestor the name of the storage account to be used
-#' @param azurecontainer the name of the storage container to be used
-#' @param storageaccesskey the storage access key for the storage account to be used, found in the portal under "Access keys" in the storage account menu
-#' @returns T/F if valid values were sent
-set_storage_options <- function(azurestor=NULL, azurecontainer=NULL, storageaccesskey=NULL){
-  if(is.null(azurestor)){
-    azurestor = Sys.getenv("AZURESTOR")
-  }
-
-  azurestor = trimws(azurestor)
-  # check if this is a valid azurestor in this azuresub.
-  stor <- get_stor(azurestor)
-  if(is.null(stor)){ return(FALSE)}
-  else {
-    # if valid, set option
-    options('azurestor' = azurestor)
-  }
-  # Unsure what is going to be in the Renv for now, so having container be one
-  if(is.null(azurecontainer)){
-    azurecontainer = Sys.getenv("AZURECONTAINER")
-  }
-
-  azurecontainer = trimws(azurecontainer)
-  # check if this is a valid azurecontainer in this azurestor
-  cont <- get_container(azurecontainer)
-  if(is.null(cont)){ return(FALSE) }
-  else {
-    options('azurecontainer'=azurecontainer)
-  }
-  if(is.null(storageaccesskey)){
-      storageaccesskey = Sys.getenv("STORAGEACCESSKEY")
-  }
-  storageaccesskey = trimws(storageaccesskey)
-  options('storageaccesskey'=storageaccesskey)
-  return(TRUE)
-
-}
 
 #' get the storage account object
 #'

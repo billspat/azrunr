@@ -9,8 +9,8 @@ vm_from_template(
   vmName,
   templateFile,
   shellScript,
-  adminPasswordOrKey,
   userPassword,
+  adminPasswordOrKey = getOption("azuresshkey"),
   cpuSize = c("CPU-4GB", "CPU-7GB", "CPU-8GB", "CPU-14GB", "CPU-16GB", "GPU-56GB"),
   ubuntuOSVersion = c("18.04-LTS", "20_04-lts", "20_04-daily-lts-gen2"),
   adminUsername = getOption("azureuser"),
@@ -29,11 +29,10 @@ vm_from_template(
 
 \item{templateFile}{the file path to the template json used to deploy the VM and other resources}
 
-\item{shellScript}{the file path to the extension script file}
+\item{shellScript}{the file path to the extension script file
+#' @param userPassword Rstudio password}
 
 \item{adminPasswordOrKey}{ssh public key used to access the vm through ssh}
-
-\item{userPassword}{Rstudio password}
 
 \item{cpuSize}{the size of the cpu, one of the following list ("CPU-4GB", "CPU-7GB", "CPU-8GB", "CPU-14GB", "CPU-16GB", "GPU-56GB")}
 
