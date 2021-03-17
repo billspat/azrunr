@@ -293,3 +293,27 @@ get_container <- function(azurecontainer=getOption('azurecontainer'), azurestor=
   return(cont)
 }
 
+
+#' Create a new resource group, set it to the azurerg option
+#'
+#' @param azurerg the name of the resource group to create
+#' @param azuresub the subscription id to create the resource group in
+#' @return the resource group object of either the newly created resource group, or the resource group that already exists.
+new_rg <- function(azurerg=getOption('azurerg'), azuresub=getOption('azuresub'))
+{
+  sub <- get_sub(azuresub) # get subscription object
+
+  if (!sub$resource_group_exists(azurerg)) # resource group does not exist already
+  {
+    print(paste("Creating resource group", azurerg))
+    rg <- sub$create_resource_group(azurerg, location='eastus')
+    options('azurerg'=azurerg)
+    print(paste("Now using resource group", azurerg))
+  }
+  else # resource group does already exist
+  {
+    print("A resource group with this name already exists", quote=FALSE)
+    rg <- get_rg(azurerg)
+  }
+  return(rg)
+}

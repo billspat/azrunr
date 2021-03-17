@@ -2,7 +2,9 @@
 title: "azrunr_walkthrough"
 author: "Colin Williams"
 date: "2/17/2021"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -16,6 +18,8 @@ the users information.
 
 ## Setup
 ----------
+You must have an Azure Account linked to a subscription to utilize this package, see [link](https://azure.microsoft.com/en-us/free/) for more information.
+
 To start, we will log in to Azure using the following code
 ```{r login, include=TRUE}
 library(azrunr)
@@ -51,7 +55,7 @@ Now that our parameters are set, the remainder of the package is opened up for e
 
 Launching a vm can be done with the use of a template and parameters.
 
-NOTE: this function is not very flexible and is only guarenteed to work with the provided template and shellscript.
+NOTE: this function is not very flexible and is only guaranteed to work with the provided template and shellscript.
 ```{r vm from template, include=TRUE}
 # the following will provision a vm and resources based on the parameters we have already set as well as a few more
 # There are templateFile and shellScripts available within the /inst/VM_From_Template folder named azuredeploy.json and isntallrstudio_ubuntu20.sh
@@ -71,6 +75,6 @@ deploy <- vm_from_template(vmname, templateFile="/inst/VM_From_Template/azuredep
 All of these resources can be easily deleted using the delete_deployment_resources() function.
 All that is required to delete the resources is the vm name, and the resource group that is already set
 ```{r delete resources}
-vmname = ""
+vmname = "testvmwill3298-5ueymiwq5c6gi"
 delete_deployment_resources(vmname)
 ```
